@@ -62,7 +62,6 @@ def train(
                 "float32": torch.float32,
                 "float64": torch.float64,
             }[cfg.wa_dtype],
-            count=curr_iter,
         )
 
     substep = curr_iter * cfg.acc_steps

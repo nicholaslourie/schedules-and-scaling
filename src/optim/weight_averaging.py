@@ -20,7 +20,6 @@ class WeightAverager:
         interval=1,
         device=None,
         dtype=torch.float32,
-        count=0,
     ):
         super().__init__()
         self.device = device  # Where to keep avg model
@@ -32,7 +31,7 @@ class WeightAverager:
         assert horizon % interval == 0, "Interval should divide horizon"
         self.interval = interval
         self.horizon = horizon
-        self.count = count
+        self.count = 0
 
     @torch.no_grad()
     def step(self, model, is_master_rank=True):
