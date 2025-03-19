@@ -94,8 +94,6 @@ def parse_args(base_parser, args, namespace):
     )
 
     parser.add_argument("--wa-use-temp-dir", action="store_true")
-    parser.add_argument("--wa-sweep-horizon", action="store_true")
-    parser.add_argument("--max-num-wa-sweeps", default=5, type=int)
 
     # Dataset params
     parser.add_argument("--datasets-dir", type=str, default="./datasets/")

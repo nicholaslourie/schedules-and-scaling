@@ -48,8 +48,6 @@ python ./src/main.py --compile --scheduler wsd --wsd-fract-decay 0.2 --weight-av
 ```
 With this, the averaging is done automatically in slots of 500 steps; the model averages are all stored (beware of the disk space). The frequency is handled via the arguments `--wa-interval` (average every k steps) and `--wa-horizon` (the length of the horizon/window).
 
-Moreover, the argument `wa-sweep-horizon` helps to automatically sweep the horizon to find the best performance, but may slow down training.
-
 ## FLOPS helpers
 The [`flops.ipynb`](flops.ipynb) provides a few helpers and functionalities for FLOPS computations of transformer configurations.
 

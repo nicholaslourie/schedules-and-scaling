@@ -77,29 +77,6 @@ class WeightAverager:
 
         return new_model
 
-    def sweep_horizon_like(self, model, max_num=None):
-        if isinstance(model, torch.nn.parallel.DistributedDataParallel):
-            model = model.module
-        new_model = deepcopy(model)
-        avg_state = deepcopy(self.module.state_dict())
-        if max_num is None:
-            max_num = self.num_saved
-        # Assumes all points exist
-        for n in range(min(self.num_saved, max_num)):
-            # Load state from the corresponding checkpoint
-            count = self.count - self.count % self.horizon - n * self.horizon
-            state = torch.load(self.save_dir / f"{count}.pt")
-
-            # Update average state
-            for key, avg in avg_state.items():
-                new = state[key].to(dtype=avg.dtype, device=avg.device)
-                rate = 1 / (n + 1)
-                avg.copy_(torch.lerp(avg, new, rate))
-
-            # Set new_model state and yield it
-            map_and_load_state_dict(new_model, avg_state)
-            yield ((n + 1) * self.horizon, new_model)
-
 
 def map_and_load_state_dict(model, state_dict):
     for key, m_val in model.state_dict().items():
@@ -127,86 +104,40 @@ def eval_wa(
 
     if weight_averager.num_saved == 0:
         return
-    if not cfg.wa_sweep_horizon:
-        val_reader.set_step(0)
-        val_acc, val_loss, val_perplexity = eval(
-            weight_averager.get_latest_like(model).eval(),
-            val_reader,
-            cfg.device,
-            max_num_batches=(
-                val_reader.num_batches()
-                if curr_iter == cfg.iterations or full_eval
-                else cfg.eval_batches
-            ),
-            ctx=type_ctx,
-            cfg=cfg,
-        )
 
-        if cfg.wandb:
-            if curr_iter == cfg.iterations or full_eval:
-                logs = {
-                    "iter": curr_iter,
-                    "final-val/loss_wa": val_loss,
-                    "final-val/perplexity_wa": val_perplexity,
-                    "final-val/acc_wa": val_acc,
-                }
-            else:
-                logs = {
-                    "iter": curr_iter,
-                    "val/loss_wa": val_loss,
-                    "val/perplexity_wa": val_perplexity,
-                    "val/acc_wa": val_acc,
-                }
-            wandb.log(logs)
-        print(
-            f">WA Eval: Iter={curr_iter} "
-            f"val_loss={val_loss:.3f} "
-            f"val_pp={val_perplexity:.3f} "
-            f"val_acc={val_acc:3f}"
-        )
-    else:
-        losses = []
-        for horizon, avg_model in weight_averager.sweep_horizon_like(
-            model, cfg.max_num_wa_sweeps
-        ):
-            avg_model.eval()
-            val_reader.set_step(0)
-            _, val_loss, _ = eval(
-                avg_model,
-                val_reader,
-                cfg.device,
-                max_num_batches=(
-                    val_reader.num_batches()
-                    if curr_iter == cfg.iterations or full_eval
-                    else cfg.eval_batches
-                ),
-                ctx=type_ctx,
-                cfg=cfg,
-            )
+    val_reader.set_step(0)
+    val_acc, val_loss, val_perplexity = eval(
+        weight_averager.get_latest_like(model).eval(),
+        val_reader,
+        cfg.device,
+        max_num_batches=(
+            val_reader.num_batches()
+            if curr_iter == cfg.iterations or full_eval
+            else cfg.eval_batches
+        ),
+        ctx=type_ctx,
+        cfg=cfg,
+    )
 
-            losses.append((val_loss, horizon))
-        if len(losses) == 0:  # in case of none saved yet
-            return
-        best_loss, best_horizon = sorted(losses)[0]
-
-        print(f"WA Eval: {[(h, f'{l:0.3e}') for (l,h) in losses]}")
-
-        if cfg.wandb:
-            if curr_iter == cfg.iterations or full_eval:
-                logs = {
-                    "iter": curr_iter,
-                    "final-val/loss_wa": losses[0][0],
-                    "final-val/perplexity_wa": 2.71828 ** losses[0][0],
-                    "final-val/best_loss_wa": best_loss,
-                    "final-val/best_perplexity_wa": 2.71828**best_loss,
-                }
-            else:
-                logs = {
-                    "iter": curr_iter,
-                    "val/loss_wa": losses[0][0],
-                    "val/perplexity_wa": 2.71828 ** losses[0][0],
-                    "val/best_loss_wa": best_loss,
-                    "val/best_perplexity_wa": 2.71828**best_loss,
-                    "wa_best_horizon": best_horizon,
-                }
-            wandb.log(logs)
+    if cfg.wandb:
+        if curr_iter == cfg.iterations or full_eval:
+            logs = {
+                "iter": curr_iter,
+                "final-val/loss_wa": val_loss,
+                "final-val/perplexity_wa": val_perplexity,
+                "final-val/acc_wa": val_acc,
+            }
+        else:
+            logs = {
+                "iter": curr_iter,
+                "val/loss_wa": val_loss,
+                "val/perplexity_wa": val_perplexity,
+                "val/acc_wa": val_acc,
+            }
+        wandb.log(logs)
+    print(
+        f">WA Eval: Iter={curr_iter} "
+        f"val_loss={val_loss:.3f} "
+        f"val_pp={val_perplexity:.3f} "
+        f"val_acc={val_acc:3f}"
+    )
