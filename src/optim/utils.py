@@ -155,45 +155,6 @@ def eval(
 
 
 @torch.no_grad()
-def eval_sweep_dropk(
-    model,
-    data_tensor,
-    sequence_length,
-    batch_size,
-    n_heads,
-    device="cpu",
-    max_num_batches=24,
-    ctx=nullcontext(),
-):
-    assert model.training == False
-
-    x_axis, y_axis_pp, y_axis_acc, y_axis_loss = (
-        torch.linspace(0.0, 0.95, 15),
-        [],
-        [],
-        [],
-    )
-    loss_list_val, acc_list = [], []
-
-    for frac in x_axis:
-        drop_k = int(sequence_length * frac * n_heads)
-        for _ in range(max_num_batches):
-            x, y = get_batch(data_tensor, sequence_length, batch_size, device=device)
-            with ctx:
-                outputs = model(
-                    x, targets=y, alpha_th=None, drop_k=drop_k, get_logits=True
-                )
-            loss_list_val.append(outputs["ce_loss"])
-            acc_list.append((outputs["logits"].argmax(-1) == y).float().mean())
-
-        y_axis_acc.append(torch.stack(acc_list).mean().item())
-        y_axis_loss.append(np.mean(loss_list_val))
-        y_axis_pp.append(2.71828 ** y_axis_loss[-1])
-
-    return x_axis, y_axis_acc, y_axis_pp, y_axis_loss
-
-
-@torch.no_grad()
 def eval_sweep_alphath(
     model,
     data_tensor,
@@ -219,7 +180,7 @@ def eval_sweep_alphath(
             x, y = get_batch(data_tensor, sequence_length, batch_size, device=device)
             with ctx:
                 outputs = model(
-                    x, targets=y, alpha_th=alpha_th, drop_k=None, get_logits=True
+                    x, targets=y, alpha_th=alpha_th, get_logits=True
                 )
             nph, nh = (
                 outputs["num_head_pruned_per_layer"],
