@@ -101,25 +101,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument("--wa-sweep-horizon", action="store_true")
     parser.add_argument("--max-num-wa-sweeps", default=5, type=int)
 
-    parser.add_argument("--exponential-moving-average", action="store_true")
-    parser.add_argument(
-        "--ema-interval",
-        default=10,
-        type=int,
-        help="How often to take the EMA average (every k steps).",
-    )
-    parser.add_argument(
-        "--ema-decay",
-        default=0.95,
-        type=float,
-        help="EMA decay parameter (between 0.9 and 1).",
-    )
-    parser.add_argument(
-        "--ema-after-warmup",
-        action="store_true",
-        help="Start EMA after warmup steps.",
-    )
-
     # Dataset params
     parser.add_argument("--datasets-dir", type=str, default="./datasets/")
     parser.add_argument(
