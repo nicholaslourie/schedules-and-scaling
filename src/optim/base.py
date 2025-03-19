@@ -7,7 +7,6 @@ import yaml
 import torch
 import wandb
 
-from logger.logger import DynamicsLogger
 from optim.weight_averaging import (
     WeightAverager,
     eval_wa,
@@ -81,16 +80,6 @@ def train(
             }[cfg.wa_dtype],
             count=curr_iter,
         )
-
-    if distributed_backend.is_master_process() and cfg.log_dynamics:
-        with open(cfg.dynamics_logger_cfg, "r") as f:
-            dlcfg = yaml.safe_load(f)
-
-        # Hooks into optimizer
-        dlogger = DynamicsLogger(
-            model, opt, dlcfg, cfg.results_base_folder, wandb=cfg.wandb
-        )
-        dlogger.iteration = curr_iter
 
     substep = curr_iter * cfg.acc_steps
     train_reader, val_reader = datareaders["train"], datareaders["val"]

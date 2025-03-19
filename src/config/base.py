@@ -38,10 +38,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument(
         "--eval-seq-prefix", default="none", type=str
     )  # prefix used to generate sequences
-    parser.add_argument("--log-dynamics", action="store_true")
-    parser.add_argument(
-        "--dynamics-logger-cfg", default="./src/logger/rotational_logger.yaml", type=str
-    )
 
     # Schedule
     parser.add_argument(
