@@ -18,7 +18,7 @@ This is the codebase accompanying the paper [*Scaling Laws and Compute-Optimal T
 **Figure:** The cooldown schedule allows to perform scaling law experiments for a fraction of the compute. Instead of having to train from scratch (cosine), we launch one long run and perform cooldowns from intermediate checkpoints after training.
 
 
-## Quickstart 
+## Quickstart
 
 Create a conda environment and install dependencies (we recommend Python 3.10):
 
@@ -64,5 +64,3 @@ In order to cite this work:
   url     = {http://arxiv.org/abs/2405.18392}
 }
 ```
-
-
