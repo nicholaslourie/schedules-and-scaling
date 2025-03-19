@@ -76,6 +76,11 @@ def main(args):
 
     exp_name = get_exp_name(args, distributed_backend)
     exp_dir = Path(args.results_base_folder) / exp_name
+    if exp_dir.exists():
+        raise RuntimeError(
+            f"The experiment dir {exp_dir} already exists. Specify a"
+            f" different experiment name.",
+        )
 
     if distributed_backend.is_master_process():
         exp_dir.mkdir(parents=True, exist_ok=True)
@@ -105,7 +110,6 @@ def main(args):
         }))
 
     model = get_model(args).to(args.device)
-    # TODO: take care of initializing the model if args.use_pretrained != 'none'
     print(f"\nModel:\n{model}")
     if distributed_backend.is_master_process():
         logger.info(f"Model:\n{model}")
@@ -194,17 +198,6 @@ def main(args):
             raise NotImplementedError(f"Unknown scheduler type: {args.scheduler}.")
     else:
         scheduler = None
-
-    if (exp_dir / "ckpts" / "latest" / "main.pt").exists():
-        if not args.auto_resume:
-            raise ValueError(
-                f"The experiment dir {exp_dir} already exists. "
-                + "To resume training, set auto_resume=True. "
-                + "Otherwise, specify a different experiment name. "
-            )
-        else:
-            # Auto resume overwrites resume_from
-            args.resume_from = str(exp_dir / "ckpts" / "latest")
 
     stats = train(
         model=model,

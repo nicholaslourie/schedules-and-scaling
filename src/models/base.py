@@ -259,25 +259,6 @@ class GPTBase(nn.Module):
         for block in self.transformer.h:
             block.attn.bias = block.attn.bias[:, :, :sequence_length, :sequence_length]
 
-    def from_pretrained(
-        self,
-        model_path,
-    ):
-        paths = model_path.split(",")
-        if len(paths) == 1:
-            # TODO: with distributed?
-            loaded_state = torch.load(
-                str(model_path + "/ckpt.pt"),
-                map_location=torch.device(self.config.device),
-            )
-            state_to_load = loaded_state["model"]
-
-            # load the sparse model
-            state_to_load = {
-                ".".join(k.split(".")[1:]): v  # drop _orig_mod from keys
-                for k, v in state_to_load.items()
-            }
-
     def get_parameter_group_specs(self):
         """
         This long function is unfortunately doing something very simple and is being very defensive:
