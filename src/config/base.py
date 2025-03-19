@@ -87,8 +87,6 @@ def parse_args(base_parser, args, namespace):
         choices=["float32", "float64"],
     )
 
-    parser.add_argument("--wa-use-temp-dir", action="store_true")
-
     # Dataset params
     parser.add_argument("--datasets-dir", type=str, default="./datasets/")
     parser.add_argument(

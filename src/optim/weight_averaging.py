@@ -2,7 +2,7 @@ from copy import deepcopy
 import json
 import logging
 from pathlib import Path
-import tempfile
+import warnings
 
 import torch
 
@@ -18,7 +18,6 @@ class WeightAverager:
         model,
         horizon=100,
         interval=1,
-        save_dir=None,
         device=None,
         dtype=torch.float32,
         count=0,
@@ -33,19 +32,7 @@ class WeightAverager:
         assert horizon % interval == 0, "Interval should divide horizon"
         self.interval = interval
         self.horizon = horizon
-        if save_dir is None:
-            # Keep in tempdir
-            self._tempdir = tempfile.TemporaryDirectory()
-            self.save_dir = Path(self._tempdir.name)
-        else:
-            self.save_dir = Path(save_dir)
-            self.save_dir.mkdir(parents=True, exist_ok=True)
         self.count = count
-        # check if there are any checkpoints saved in the directory and set
-        # num_saved to number of checkpoints with name <= count
-        self.num_saved = len(
-            [f for f in self.save_dir.iterdir() if f.is_file() and int(f.stem) <= count]
-        )
 
     @torch.no_grad()
     def step(self, model, is_master_rank=True):
@@ -56,27 +43,25 @@ class WeightAverager:
             for key, avg in self.module.state_dict().items():
                 curr = model.state_dict()[key].to(device=self.device, dtype=avg.dtype)
                 rate = 1 / ((self.count % self.horizon) // self.interval + 1)
+                # NOTE: When horizon divides count, rate == 1 and thus the old
+                # avg is dropped and the new avg becomes equal to curr
+                # (restarting the moving average for the next horizon).
                 avg.copy_(torch.lerp(avg, curr, rate))
 
         self.count += 1
 
-        if self.count % self.horizon == 0 and is_master_rank:
-            torch.save(
-                self.module.to().state_dict(),
-                self.save_dir / f"{self.count}.pt",
-            )
-            self.num_saved += 1
-
     def get_latest_like(self, model):
-        # Return model for latest completed horizon.
+        if self.count % self.horizon != 0:
+            raise RuntimeError(
+                "Horizon is incomplete so averaged weights aren't"
+                " available.",
+            )
+
         if isinstance(model, torch.nn.parallel.DistributedDataParallel):
             model = model.module
         new_model = deepcopy(model)
 
-        # Assumes that we saved at a specific iteration, will fail otherwise
-        count = self.count - self.count % self.horizon
-        latest_path = self.save_dir / f"{count}.pt"
-        map_and_load_state_dict(new_model, torch.load(latest_path))
+        map_and_load_state_dict(new_model, self.module.to().state_dict())
 
         return new_model
 
@@ -108,7 +93,15 @@ def eval_wa(
         # Only evaluate and log on master rank
         return
 
-    if weight_averager.num_saved == 0:
+    if (
+            weight_averager.count == 0 or
+            weight_averager.count % weight_averager.horizon != 0
+    ):
+        warnings.warn(
+            "Skipping weight averaging evaluation because the averaging"
+            " horizon is only partially complete. To fix this, only"
+            " evaluate weight averaging at multiples of wa_horizon.",
+        )
         return
 
     reader.set_step(0)

@@ -6,6 +6,7 @@ import random
 import os
 import schedulefree
 import sys
+import warnings
 
 import numpy as np
 import torch
@@ -40,6 +41,28 @@ def main(args):
 
     if args.full_eval_at is None:
         args.full_eval_at = []
+
+    if args.weight_average and args.eval_interval % args.wa_horizon != 0:
+        warnings.warn(
+            "Weight averaging will not be evaluated at every evaluation"
+            " interval because --eval-interval is not divisible by"
+            " --wa-horizon.",
+        )
+    if args.weight_average and any(
+            full_eval % args.wa_horizon != 0
+            for full_eval in args.full_eval_at
+    ):
+        warnings.warn(
+            "Weight averaging will not be evaluated in all full"
+            " evaluations because --full-eval-at has integers which are"
+            " not divisible by --wa-horizon.",
+        )
+    if args.weight_average and args.iterations % args.wa_horizon != 0:
+        warnings.warn(
+            "Weight averaging will not be evaluated at the last"
+            " iteration because --iterations is not divisible by"
+            " --wa-horizon.",
+        )
 
     # NOTE args.seed is offset per worker in get_adjusted_args_for_process
     torch.backends.cuda.matmul.allow_tf32 = True

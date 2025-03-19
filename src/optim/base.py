@@ -77,7 +77,6 @@ def train(
             not_compiled_model,
             horizon=cfg.wa_horizon,
             interval=cfg.wa_interval,
-            save_dir=None if cfg.wa_use_temp_dir else exp_dir / "avgs",
             dtype={
                 "float32": torch.float32,
                 "float64": torch.float64,
