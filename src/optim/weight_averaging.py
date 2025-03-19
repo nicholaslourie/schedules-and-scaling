@@ -26,10 +26,9 @@ class WeightAverager:
             model = model.module
         self.module = deepcopy(model).to(dtype=self.dtype, device=device)
 
-        assert horizon % interval == 0, "Interval should divide period"
+        assert horizon % interval == 0, "Interval should divide horizon"
         self.interval = interval
         self.horizon = horizon
-        self.period = horizon // interval
         if save_dir is None:
             # Keep in tempdir
             self._tempdir = tempfile.TemporaryDirectory()
@@ -65,7 +64,7 @@ class WeightAverager:
             self.num_saved += 1
 
     def get_latest_like(self, model):
-        # Return model for latest completed period
+        # Return model for latest completed horizon.
         if isinstance(model, torch.nn.parallel.DistributedDataParallel):
             model = model.module
         new_model = deepcopy(model)
