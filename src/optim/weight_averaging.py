@@ -125,7 +125,7 @@ def eval_wa(
     )
 
     if curr_iter == cfg.iterations or full_eval:
-        logger.info(json.dumps({
+        logger.info("val wa (full) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
@@ -134,7 +134,7 @@ def eval_wa(
             "val/full/wa/accuracy": val_acc,
         }))
     else:
-        logger.info(json.dumps({
+        logger.info("val wa (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,

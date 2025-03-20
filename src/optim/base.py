@@ -185,7 +185,7 @@ def train(
 
             current_lrs = [param_group["lr"] for param_group in opt.param_groups]
 
-            logger.info(json.dumps({
+            logger.info("train (sampled) " + json.dumps({
                 "iter": curr_iter,
                 "lr": current_lrs[0],
                 "iter_dt": dt,
@@ -240,7 +240,7 @@ def eval_and_log(
     )
 
     if curr_iter == cfg.iterations or full_eval:
-        logger.info(json.dumps({
+        logger.info("val (full) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
@@ -249,7 +249,7 @@ def eval_and_log(
             "val/full/raw/accuracy": val_acc,
         }))
     else:
-        logger.info(json.dumps({
+        logger.info("val (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,

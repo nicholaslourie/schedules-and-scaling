@@ -104,7 +104,7 @@ def main(args):
     print("number of parameters: %.2fM" % (params_cnt / 1e6,))
     print("number of optimized parameters: %.2fM" % (optimized_params_cnt / 1e6,))
     if distributed_backend.is_master_process():
-        logger.info(json.dumps({
+        logger.info("Num parameters: " + json.dumps({
             "parameters": params_cnt,
             "optimized_parameters": optimized_params_cnt,
         }))
