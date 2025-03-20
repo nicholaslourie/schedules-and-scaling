@@ -118,32 +118,35 @@ def train(
             or curr_iter == cfg.iterations
             or (curr_iter in cfg.full_eval_at)
         ):
-            eval_and_log(
-                curr_iter,
-                tokens,
-                epoch,
-                model,
-                val_reader,
-                type_ctx,
-                distributed_backend,
-                cfg,
-                opt,
-                full_eval=(curr_iter in cfg.full_eval_at),
-            )
-
-            if curr_iter > cfg.wa_interval and cfg.weight_average:
-                eval_wa(
+            for split, reader in [("val", val_reader), ("test", test_reader)]:
+                eval_and_log(
+                    split,
                     curr_iter,
                     tokens,
                     epoch,
-                    not_compiled_model,
-                    weight_averager,
-                    val_reader,
+                    model,
+                    reader,
                     type_ctx,
                     distributed_backend,
                     cfg,
+                    opt,
                     full_eval=(curr_iter in cfg.full_eval_at),
                 )
+
+                if curr_iter > cfg.wa_interval and cfg.weight_average:
+                    eval_wa(
+                        split,
+                        curr_iter,
+                        tokens,
+                        epoch,
+                        not_compiled_model,
+                        weight_averager,
+                        reader,
+                        type_ctx,
+                        distributed_backend,
+                        cfg,
+                        full_eval=(curr_iter in cfg.full_eval_at),
+                    )
 
         if curr_iter == cfg.iterations:
             # Save checkpoints and evaluate at final iteration, but no need to train further
@@ -204,6 +207,7 @@ def train(
 
 
 def eval_and_log(
+    split,
     curr_iter,
     tokens,
     epoch,
@@ -240,26 +244,26 @@ def eval_and_log(
     )
 
     if curr_iter == cfg.iterations or full_eval:
-        logger.info("val (full) " + json.dumps({
+        logger.info(f"{split} (full) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/full/raw/loss": loss,
-            "val/full/raw/accuracy": acc,
+            f"{split}/full/raw/loss": loss,
+            f"{split}/full/raw/accuracy": acc,
         }))
     else:
-        logger.info("val (sampled) " + json.dumps({
+        logger.info(f"{split} (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/sampled/raw/loss": loss,
-            "val/sampled/raw/accuracy": acc,
+            f"{split}/sampled/raw/loss": loss,
+            f"{split}/sampled/raw/accuracy": acc,
         }))
 
     print(
         f">Eval: Iter={curr_iter} ({epoch:0.3f} epochs) "
-        f"val_loss={loss:.3f} "
-        f"val_acc={acc:3f}"
+        f"{split}_loss={loss:.3f} "
+        f"{split}_acc={acc:3f}"
     )
 
     model.train()

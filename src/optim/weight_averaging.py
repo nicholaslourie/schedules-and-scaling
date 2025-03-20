@@ -92,6 +92,7 @@ def map_and_load_state_dict(model, state_dict):
 
 
 def eval_wa(
+    split,
     curr_iter,
     tokens,
     epoch,
@@ -125,24 +126,24 @@ def eval_wa(
     )
 
     if curr_iter == cfg.iterations or full_eval:
-        logger.info("val wa (full) " + json.dumps({
+        logger.info(f"{split} wa (full) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/full/wa/loss": loss,
-            "val/full/wa/accuracy": acc,
+            f"{split}/full/wa/loss": loss,
+            f"{split}/full/wa/accuracy": acc,
         }))
     else:
-        logger.info("val wa (sampled) " + json.dumps({
+        logger.info(f"{split} wa (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/sampled/wa/loss": loss,
-            "val/sampled/wa/accuracy": acc,
+            f"{split}/sampled/wa/loss": loss,
+            f"{split}/sampled/wa/accuracy": acc,
         }))
 
     print(
         f">WA Eval: Iter={curr_iter} "
-        f"val_loss={loss:.3f} "
-        f"val_acc={acc:3f}"
+        f"{split}_loss={loss:.3f} "
+        f"{split}_acc={acc:3f}"
     )
