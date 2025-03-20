@@ -86,7 +86,9 @@ def train(
         )
 
     substep = curr_iter * cfg.acc_steps
-    train_reader, val_reader = datareaders["train"], datareaders["val"]
+    train_reader = datareaders["train"]
+    val_reader = datareaders["val"]
+    test_reader = datareaders["test"]
     train_reader.set_step(substep)
     stats = {"train_loss": [], "val_loss": [], "val_acc": []}
     model.train()
