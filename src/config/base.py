@@ -101,16 +101,7 @@ def parse_args(base_parser, args, namespace):
         "--dataset",
         default="slimpajama",
         choices=[
-            "wikitext",
-            "shakespeare-char",
-            "arxiv",
-            "arxiv2000",
-            "arxiv+wiki",
-            "openwebtext2",
-            "redpajama",
             "slimpajama",
-            "slimpajama_chunk1",
-            "redpajamav2",
         ],
     )
     parser.add_argument(
@@ -119,7 +110,7 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument("--vocab-size", default=50304, type=int)
     parser.add_argument(
         "--data-in-ram", action="store_true"
-    )  # force the data to RAM, mostly useless except for openwebtext2
+    )  # force the data to RAM, mostly useless
 
     # Model params
     parser.add_argument(
