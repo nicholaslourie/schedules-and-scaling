@@ -208,7 +208,7 @@ def eval_and_log(
     tokens,
     epoch,
     model,
-    val_reader,
+    reader,
     type_ctx,
     distributed_backend,
     cfg,
@@ -224,16 +224,15 @@ def eval_and_log(
         opt.eval()
 
     if curr_iter == cfg.iterations or full_eval:
-        max_num_batches = val_reader.num_batches()
+        max_num_batches = reader.num_batches()
     else:
         max_num_batches = cfg.eval_batches
 
-    # to make sure we start from the beginning of the validation set,
-    # i.e. repeat the same batches
-    val_reader.set_step(0)
-    val_acc, val_loss = eval(
+    # Make sure we start from the beginning (repeat the same batches).
+    reader.set_step(0)
+    acc, loss = eval(
         model,
-        val_reader,
+        reader,
         cfg.device,
         max_num_batches=max_num_batches,
         ctx=type_ctx,
@@ -245,22 +244,22 @@ def eval_and_log(
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/full/raw/loss": val_loss,
-            "val/full/raw/accuracy": val_acc,
+            "val/full/raw/loss": loss,
+            "val/full/raw/accuracy": acc,
         }))
     else:
         logger.info("val (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/sampled/raw/loss": val_loss,
-            "val/sampled/raw/accuracy": val_acc,
+            "val/sampled/raw/loss": loss,
+            "val/sampled/raw/accuracy": acc,
         }))
 
     print(
         f">Eval: Iter={curr_iter} ({epoch:0.3f} epochs) "
-        f"val_loss={val_loss:.3f} "
-        f"val_acc={val_acc:3f}"
+        f"val_loss={loss:.3f} "
+        f"val_acc={acc:3f}"
     )
 
     model.train()

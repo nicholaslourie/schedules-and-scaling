@@ -139,21 +139,21 @@ def eval(
 ):
     assert model.training == False
 
-    loss_list_val, acc_list = [], []
+    loss_list, acc_list = [], []
 
     for idx in range(max_num_batches):
         x, y = get_batch(reader, device=device)
         with ctx:
             outputs = model(x, targets=y, get_logits=True)
-        val_loss = outputs["loss"]
+        loss = outputs["loss"]
 
-        loss_list_val.append(val_loss)
+        loss_list.append(loss)
         acc_list.append((outputs["logits"].argmax(-1) == y).float().mean())
 
-    val_acc = torch.stack(acc_list).mean().item()
-    val_loss = torch.stack(loss_list_val).mean().item()
+    acc = torch.stack(acc_list).mean().item()
+    loss = torch.stack(loss_list).mean().item()
 
-    return val_acc, val_loss
+    return acc, loss
 
 
 def save_checkpoint(model, opt, scheduler, itr, ckpt_dir: Path):
