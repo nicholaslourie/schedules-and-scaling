@@ -7,12 +7,16 @@ https://github.com/openai/gpt-2/blob/master/src/model.py
 https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
 """
 
+import logging
 import math
 
 import tiktoken
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
+
+logger = logging.getLogger(__name__)
 
 
 class LayerNorm(nn.Module):

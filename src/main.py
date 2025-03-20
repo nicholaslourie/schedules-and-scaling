@@ -19,6 +19,9 @@ from optim.base import train
 from optim.utils import cos_inf_schedule, wsd_schedule
 
 
+logger = logging.getLogger(__name__)
+
+
 def main(args):
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)

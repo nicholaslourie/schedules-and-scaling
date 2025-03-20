@@ -3,6 +3,7 @@ Llama style Language Model that is
 compilable (avoids torch complex)
 """
 
+import logging
 import math
 
 import tiktoken
@@ -10,6 +11,9 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from models.base import CausalSelfAttention, GPTBase
+
+
+logger = logging.getLogger(__name__)
 
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0) -> torch.Tensor:

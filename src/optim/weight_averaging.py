@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 from pathlib import Path
 import tempfile
 
@@ -6,6 +7,9 @@ import torch
 import wandb
 
 from .utils import eval
+
+
+logger = logging.getLogger(__name__)
 
 
 class WeightAverager:

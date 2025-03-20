@@ -1,4 +1,9 @@
+import logging
+
 import distributed
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_args(base_parser, args, namespace):

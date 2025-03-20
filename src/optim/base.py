@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 import copy
+import logging
 from pathlib import Path
 import time
 import yaml
@@ -19,6 +20,9 @@ from .utils import (
     save_checkpoint,
     save_worker_state,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def train(

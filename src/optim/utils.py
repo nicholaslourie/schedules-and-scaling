@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import random
 import numpy as np
@@ -7,6 +8,9 @@ from contextlib import nullcontext
 import torch.distributed as dist
 import math
 import wandb
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_batch(datareader, device="cpu"):

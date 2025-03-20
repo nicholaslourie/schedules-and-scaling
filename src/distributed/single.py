@@ -1,6 +1,10 @@
 from contextlib import nullcontext
+import logging
 
 from .backend import DistributedBackend
+
+
+logger = logging.getLogger(__name__)
 
 
 class SinlgeNodeBackend(DistributedBackend):
