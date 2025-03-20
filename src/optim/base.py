@@ -118,6 +118,7 @@ def train(
         ):
             eval_and_log(
                 curr_iter,
+                tokens,
                 epoch,
                 model,
                 val_reader,
@@ -201,6 +202,7 @@ def train(
 
 def eval_and_log(
     curr_iter,
+    tokens,
     epoch,
     model,
     val_reader,
@@ -238,6 +240,8 @@ def eval_and_log(
     if curr_iter == cfg.iterations or full_eval:
         logger.info(json.dumps({
             "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
             "val/full/raw/loss": val_loss,
             "val/full/raw/perplexity": val_perplexity,
             "val/full/raw/accuracy": val_acc,
@@ -245,6 +249,8 @@ def eval_and_log(
     else:
         logger.info(json.dumps({
             "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
             "val/sampled/raw/loss": val_loss,
             "val/sampled/raw/perplexity": val_perplexity,
             "val/sampled/raw/accuracy": val_acc,
