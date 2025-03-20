@@ -9,7 +9,6 @@ import sys
 
 import numpy as np
 import torch
-import wandb
 
 import config
 from data.utils import DataReader, get_dataset
@@ -65,16 +64,6 @@ def main(args):
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
-    if distributed_backend.is_master_process() and args.wandb:
-        wandb.init(
-            project=args.wandb_project,
-            name=exp_name,
-            config=vars(args),
-        )
-        wandb.define_metric("iter")
-        wandb.define_metric("train/*", step_metric="iter")
-        wandb.define_metric("val/*", step_metric="iter")
-        wandb.define_metric("lr", step_metric="iter")
 
     print(f"Starting Experiment: {exp_name}")
     print(f"Experiment Directory: {exp_dir}")
@@ -212,7 +201,7 @@ def get_args():
 
 
 def get_exp_name(args, distributed_backend):
-    """Returns the name of the experiment, used for saving models and wandb."""
+    """Returns the name of the experiment, used for saving models."""
     if args.experiment_name is not None:
         return args.experiment_name
 
@@ -242,8 +231,6 @@ def get_exp_name(args, distributed_backend):
             f"_scd{args.scale_depth}"
             # f"_bs{args.batch_size}x{args.acc_steps}_ws{args.world_size}"
         )
-    if args.wandb_run_prefix != "none":
-        exp_name = args.wandb_run_prefix + "_" + exp_name
     exp_name += f"_seed{args.seed - rank}"
     exp_name += f"_data_seed{args.data_seed}"
 

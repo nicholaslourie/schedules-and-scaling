@@ -1,6 +1,5 @@
 # Datasets, assets, logging
 datasets/
-wandb/
 exps/
 scripts/
 cluster/
