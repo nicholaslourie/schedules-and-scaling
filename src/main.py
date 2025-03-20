@@ -1,9 +1,11 @@
 import argparse
 import json
+import logging
 from pathlib import Path
 import random
 import os
 import schedulefree
+import sys
 
 import numpy as np
 import torch
@@ -18,6 +20,18 @@ from optim.utils import cos_inf_schedule, wsd_schedule
 
 
 def main(args):
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter(
+        "%(asctime)s; %(levelname)s; %(name)s; %(message)s",
+    )
+
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setLevel(logging.WARNING)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
     distributed_backend = distributed.make_backend_from_args(args)
     args = distributed_backend.get_adjusted_args_for_process(args)
     args.world_size = distributed_backend.get_world_size()
@@ -37,6 +51,17 @@ def main(args):
 
     exp_name = get_exp_name(args, distributed_backend)
     exp_dir = Path(args.results_base_folder) / exp_name
+
+    if distributed_backend.is_master_process():
+        exp_dir.mkdir(parents=True, exist_ok=True)
+
+        file_handler = logging.FileHandler(
+            filename=exp_dir / "log",
+            mode="a",
+        )
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
     if distributed_backend.is_master_process() and args.wandb:
         wandb.init(
             project=args.wandb_project,
@@ -151,9 +176,6 @@ def main(args):
         else:
             # Auto resume overwrites resume_from
             args.resume_from = str(exp_dir / "ckpts" / "latest")
-
-    elif distributed_backend.is_master_process():
-        exp_dir.mkdir(parents=True, exist_ok=True)
 
     stats = train(
         model=model,
