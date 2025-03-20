@@ -68,13 +68,24 @@ def main(args):
     print(f"Starting Experiment: {exp_name}")
     print(f"Experiment Directory: {exp_dir}")
     print(f"Config:\n{vars(args)}\n")
+    if distributed_backend.is_master_process():
+        logger.info(f"Experiment: {exp_name}")
+        logger.info(f"Config: {json.dumps(vars(args))}")
 
     print(f"Loading dataset: '{args.dataset}'")
     datareaders = get_data_readers(args)
 
+    if distributed_backend.is_master_process():
+        logger.info("Num tokens: " + json.dumps({
+            split: reader.num_tokens
+            for split, reader in datareaders.items()
+        }))
+
     model = get_model(args).to(args.device)
     # TODO: take care of initializing the model if args.use_pretrained != 'none'
     print(f"\nModel:\n{model}")
+    if distributed_backend.is_master_process():
+        logger.info(f"Model:\n{model}")
 
     model = distributed_backend.transform_model(model)
     group_specs = distributed_backend.get_raw_model(model).get_parameter_group_specs()
@@ -119,6 +130,8 @@ def main(args):
             group_specs, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay
         )
     print(f"\nOptimizer:\n{opt}")
+    if distributed_backend.is_master_process():
+        logger.info(f"Optimizer:\n{opt}")
 
     if args.scheduler != "none":
         assert args.warmup_steps < args.iterations, "Warmup steps must be < iterations."
