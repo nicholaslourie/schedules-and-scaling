@@ -1,10 +1,10 @@
 from copy import deepcopy
+import json
 import logging
 from pathlib import Path
 import tempfile
 
 import torch
-import wandb
 
 from .utils import eval
 
@@ -122,22 +122,21 @@ def eval_wa(
         cfg=cfg,
     )
 
-    if cfg.wandb:
-        if curr_iter == cfg.iterations or full_eval:
-            logs = {
-                "iter": curr_iter,
-                "final-val/loss_wa": val_loss,
-                "final-val/perplexity_wa": val_perplexity,
-                "final-val/acc_wa": val_acc,
-            }
-        else:
-            logs = {
-                "iter": curr_iter,
-                "val/loss_wa": val_loss,
-                "val/perplexity_wa": val_perplexity,
-                "val/acc_wa": val_acc,
-            }
-        wandb.log(logs)
+    if curr_iter == cfg.iterations or full_eval:
+        logger.info(json.dumps({
+            "iter": curr_iter,
+            "val/full/wa/loss": val_loss,
+            "val/full/wa/perplexity": val_perplexity,
+            "val/full/wa/accuracy": val_acc,
+        }))
+    else:
+        logger.info(json.dumps({
+            "iter": curr_iter,
+            "val/sampled/wa/loss": val_loss,
+            "val/sampled/wa/perplexity": val_perplexity,
+            "val/sampled/wa/accuracy": val_acc,
+        }))
+
     print(
         f">WA Eval: Iter={curr_iter} "
         f"val_loss={val_loss:.3f} "

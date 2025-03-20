@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from contextlib import nullcontext
 import torch.distributed as dist
 import math
-import wandb
 
 
 logger = logging.getLogger(__name__)

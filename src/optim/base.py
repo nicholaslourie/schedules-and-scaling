@@ -1,12 +1,12 @@
 from contextlib import nullcontext
 import copy
+import json
 import logging
 from pathlib import Path
 import time
 import yaml
 
 import torch
-import wandb
 
 from optim.weight_averaging import (
     WeightAverager,
@@ -182,22 +182,19 @@ def train(
 
             current_lrs = [param_group["lr"] for param_group in opt.param_groups]
 
+            logger.info(json.dumps({
+                "iter": curr_iter,
+                "lr": current_lrs[0],
+                "iter_dt": dt,
+                "train/sampled/raw/loss": train_loss,
+                "train/sampled/raw/perplexity": 2.71828**train_loss,
+            }))
+
             print(
                 f"Train: Iter={curr_iter} ({epoch:0.3f} epochs) "
                 f"train_loss={train_loss:.3f} iter_dt={dt:.2e}s "
                 f"lr={current_lrs[0]:.2e}"
             )
-
-            if cfg.wandb:
-                wandb.log(
-                    {
-                        "iter": curr_iter,
-                        "train/loss": train_loss,
-                        "train/perplexity": 2.71828**train_loss,
-                        "lr": current_lrs[0],
-                        "iter_dt": dt,
-                    }
-                )
 
     return stats
 
@@ -238,6 +235,21 @@ def eval_and_log(
         cfg=cfg,
     )
 
+    if curr_iter == cfg.iterations or full_eval:
+        logger.info(json.dumps({
+            "iter": curr_iter,
+            "val/full/raw/loss": val_loss,
+            "val/full/raw/perplexity": val_perplexity,
+            "val/full/raw/accuracy": val_acc,
+        }))
+    else:
+        logger.info(json.dumps({
+            "iter": curr_iter,
+            "val/sampled/raw/loss": val_loss,
+            "val/sampled/raw/perplexity": val_perplexity,
+            "val/sampled/raw/accuracy": val_acc,
+        }))
+
     print(
         f">Eval: Iter={curr_iter} ({epoch:0.3f} epochs) "
         f"val_loss={val_loss:.3f} "
@@ -245,35 +257,4 @@ def eval_and_log(
         f"val_acc={val_acc:3f}"
     )
 
-    if cfg.wandb:
-        if curr_iter == cfg.iterations or full_eval:
-            logs = {
-                "iter": curr_iter,
-                "final-val/loss": val_loss,
-                "final-val/perplexity": val_perplexity,
-                "final-val/acc": val_acc,
-            }
-        else:
-            logs = {
-                "iter": curr_iter,
-                "val/loss": val_loss,
-                "val/perplexity": val_perplexity,
-                "val/acc": val_acc,
-            }
-
-        wandb.log(logs)
-        if cfg.eval_seq_prefix != "none" and (
-            curr_iter % (cfg.eval_interval * 5) == 0 or curr_iter == cfg.iterations
-        ):
-            text_table = wandb.Table(columns=["itr", "val-pp", "text"])
-
-            out_str = distributed_backend.get_raw_model(model).generate_from_string(
-                cfg.eval_seq_prefix,
-                max_new_tokens=40,
-                temperature=0.9,
-                top_k=None,
-            )
-            text_table.add_data(curr_iter, val_perplexity, out_str)
-            # why a copy? see github.com/wandb/wandb/issues/2981
-            wandb.log({f"generated-text-{wandb.run.name}": copy.copy(text_table)})
     model.train()

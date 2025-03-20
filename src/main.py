@@ -103,10 +103,11 @@ def main(args):
     params_cnt = distributed_backend.get_raw_model(model).get_num_params()
     print("number of parameters: %.2fM" % (params_cnt / 1e6,))
     print("number of optimized parameters: %.2fM" % (optimized_params_cnt / 1e6,))
-    if args.wandb and distributed_backend.is_master_process():
-        wandb.log(
-            {"parameters": params_cnt, "optimized_parameters": optimized_params_cnt}
-        )
+    if distributed_backend.is_master_process():
+        logger.info(json.dumps({
+            "parameters": params_cnt,
+            "optimized_parameters": optimized_params_cnt,
+        }))
 
     if args.opt == "adamw":
         opt = torch.optim.AdamW(
