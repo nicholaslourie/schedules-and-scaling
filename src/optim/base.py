@@ -132,6 +132,8 @@ def train(
             if curr_iter > cfg.wa_interval and cfg.weight_average:
                 eval_wa(
                     curr_iter,
+                    tokens,
+                    epoch,
                     not_compiled_model,
                     weight_averager,
                     val_reader,

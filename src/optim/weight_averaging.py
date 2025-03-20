@@ -93,6 +93,8 @@ def map_and_load_state_dict(model, state_dict):
 
 def eval_wa(
     curr_iter,
+    tokens,
+    epoch,
     model,
     weight_averager,
     val_reader,
@@ -125,6 +127,8 @@ def eval_wa(
     if curr_iter == cfg.iterations or full_eval:
         logger.info(json.dumps({
             "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
             "val/full/wa/loss": val_loss,
             "val/full/wa/perplexity": val_perplexity,
             "val/full/wa/accuracy": val_acc,
@@ -132,6 +136,8 @@ def eval_wa(
     else:
         logger.info(json.dumps({
             "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
             "val/sampled/wa/loss": val_loss,
             "val/sampled/wa/perplexity": val_perplexity,
             "val/sampled/wa/accuracy": val_acc,
