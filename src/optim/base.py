@@ -88,7 +88,7 @@ def train(
     substep = curr_iter * cfg.acc_steps
     train_reader, val_reader = datareaders["train"], datareaders["val"]
     train_reader.set_step(substep)
-    stats = {"train_loss": [], "val_loss": [], "val_pp": [], "val_acc": []}
+    stats = {"train_loss": [], "val_loss": [], "val_acc": []}
     model.train()
 
     while curr_iter <= cfg.iterations:
@@ -190,7 +190,6 @@ def train(
                 "lr": current_lrs[0],
                 "iter_dt": dt,
                 "train/sampled/raw/loss": train_loss,
-                "train/sampled/raw/perplexity": 2.71828**train_loss,
             }))
 
             print(
@@ -230,7 +229,7 @@ def eval_and_log(
     # to make sure we start from the beginning of the validation set,
     # i.e. repeat the same batches
     val_reader.set_step(0)
-    val_acc, val_loss, val_perplexity = eval(
+    val_acc, val_loss = eval(
         model,
         val_reader,
         cfg.device,
@@ -245,7 +244,6 @@ def eval_and_log(
             "tokens": tokens,
             "epoch": epoch,
             "val/full/raw/loss": val_loss,
-            "val/full/raw/perplexity": val_perplexity,
             "val/full/raw/accuracy": val_acc,
         }))
     else:
@@ -254,14 +252,12 @@ def eval_and_log(
             "tokens": tokens,
             "epoch": epoch,
             "val/sampled/raw/loss": val_loss,
-            "val/sampled/raw/perplexity": val_perplexity,
             "val/sampled/raw/accuracy": val_acc,
         }))
 
     print(
         f">Eval: Iter={curr_iter} ({epoch:0.3f} epochs) "
         f"val_loss={val_loss:.3f} "
-        f"val_pp={val_perplexity:.3f} "
         f"val_acc={val_acc:3f}"
     )
 

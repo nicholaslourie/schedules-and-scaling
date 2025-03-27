@@ -111,7 +111,7 @@ def eval_wa(
         return
 
     val_reader.set_step(0)
-    val_acc, val_loss, val_perplexity = eval(
+    val_acc, val_loss = eval(
         weight_averager.get_latest_like(model).eval(),
         val_reader,
         cfg.device,
@@ -130,7 +130,6 @@ def eval_wa(
             "tokens": tokens,
             "epoch": epoch,
             "val/full/wa/loss": val_loss,
-            "val/full/wa/perplexity": val_perplexity,
             "val/full/wa/accuracy": val_acc,
         }))
     else:
@@ -139,13 +138,11 @@ def eval_wa(
             "tokens": tokens,
             "epoch": epoch,
             "val/sampled/wa/loss": val_loss,
-            "val/sampled/wa/perplexity": val_perplexity,
             "val/sampled/wa/accuracy": val_acc,
         }))
 
     print(
         f">WA Eval: Iter={curr_iter} "
         f"val_loss={val_loss:.3f} "
-        f"val_pp={val_perplexity:.3f} "
         f"val_acc={val_acc:3f}"
     )

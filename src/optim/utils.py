@@ -152,9 +152,8 @@ def eval(
 
     val_acc = torch.stack(acc_list).mean().item()
     val_loss = torch.stack(loss_list_val).mean().item()
-    val_perplexity = 2.71828**val_loss
 
-    return val_acc, val_loss, val_perplexity
+    return val_acc, val_loss
 
 
 def save_checkpoint(model, opt, scheduler, itr, ckpt_dir: Path):
