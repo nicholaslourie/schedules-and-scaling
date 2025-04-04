@@ -15,10 +15,6 @@ from optim.weight_averaging import (
 from .utils import (
     eval,
     get_batch,
-    load_checkpoint,
-    load_worker_state,
-    save_checkpoint,
-    save_worker_state,
 )
 
 
@@ -51,22 +47,7 @@ def train(
     else:
         type_ctx = nullcontext()
 
-    if cfg.resume_from:
-        # This is a full resume including the model weights, optimizer, state
-        # dataloader state, random seed, etc. Not indended for fine tuning or
-        # other scenarios where some of these should change.
-        print(f"\nResuming Training From {cfg.resume_from}")
-        ckpt_dir = Path(cfg.resume_from)
-        curr_iter = load_checkpoint(
-            model,
-            opt,
-            scheduler,
-            ckpt_dir / "main.pt",
-            cfg.device,
-        )
-        load_worker_state(ckpt_dir)
-    else:
-        curr_iter = 0
+    curr_iter = 0
 
     if cfg.weight_average:
         # This does generally not support resuming training, but will work if
@@ -77,12 +58,10 @@ def train(
             not_compiled_model,
             horizon=cfg.wa_horizon,
             interval=cfg.wa_interval,
-            save_dir=None if cfg.wa_use_temp_dir else exp_dir / "avgs",
             dtype={
                 "float32": torch.float32,
                 "float64": torch.float64,
             }[cfg.wa_dtype],
-            count=curr_iter,
         )
 
     substep = curr_iter * cfg.acc_steps
@@ -94,22 +73,6 @@ def train(
     model.train()
 
     while curr_iter <= cfg.iterations:
-        # Save permanent checkpoint
-        if cfg.permanent_ckpt_interval > 0:
-            if curr_iter % cfg.permanent_ckpt_interval == 0:
-                ckpt_dir = exp_dir / "ckpts" / str(curr_iter)
-                if distributed_backend.is_master_process():
-                    save_checkpoint(model, opt, scheduler, curr_iter, ckpt_dir)
-                save_worker_state(ckpt_dir)
-
-        # Save temporary checkpoint for resuming training
-        if cfg.latest_ckpt_interval > 0:
-            if curr_iter % cfg.latest_ckpt_interval == 0 or curr_iter == cfg.iterations:
-                ckpt_dir = exp_dir / "ckpts" / "latest"
-                if distributed_backend.is_master_process():
-                    save_checkpoint(model, opt, scheduler, curr_iter, ckpt_dir)
-                save_worker_state(ckpt_dir)
-
         ws = distributed_backend.get_world_size()
         tokens = ws * substep * cfg.sequence_length * cfg.batch_size
         epoch = tokens / train_reader.num_tokens

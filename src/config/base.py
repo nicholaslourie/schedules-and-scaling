@@ -27,11 +27,6 @@ def parse_args(base_parser, args, namespace):
 
     # Checkpointing
     parser.add_argument("--results-base-folder", default="./exps", type=str)
-    parser.add_argument("--permanent-ckpt-interval", default=0, type=int)
-    parser.add_argument("--latest-ckpt-interval", default=0, type=int)
-    parser.add_argument("--resume-from", default=None, type=str)
-
-    parser.add_argument("--auto-resume", default=True)
 
     # Schedule
     parser.add_argument(
@@ -76,9 +71,7 @@ def parse_args(base_parser, args, namespace):
         "--wa-horizon",
         default=500,
         type=int,
-        help="How frequently we save uniform model averages. Should divide "
-        + "latest-ckpt-interval, otherwise some points may not be saved "
-        + "correctly.",
+        help="How many consecutive steps to use for weight averages.",
     )
     parser.add_argument(
         "--wa-dtype",
@@ -86,8 +79,6 @@ def parse_args(base_parser, args, namespace):
         type=str,
         choices=["float32", "float64"],
     )
-
-    parser.add_argument("--wa-use-temp-dir", action="store_true")
 
     # Dataset params
     parser.add_argument("--datasets-dir", type=str, default="./datasets/")
@@ -116,9 +107,6 @@ def parse_args(base_parser, args, namespace):
         ],
     )
     parser.add_argument("--parallel-block", action="store_true")
-    parser.add_argument(
-        "--use-pretrained", default="none", type=str
-    )  # 'none', 'gpt-2' or a path to the pretraind model
     parser.add_argument("--init-std", default=0.02, type=float)
     parser.add_argument("--dropout", default=0.0, type=float)
     parser.add_argument("--n-head", default=12, type=int)
