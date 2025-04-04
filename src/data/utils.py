@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 def get_dataset(args) -> Dict[str, np.ndarray]:
     """Fetch the right dataset given by the args.dataset parameter. The logic for each dataset is
     contained in its own python file. The expected format at the moment is a dictionary of np.memmap
-    containing two keys: 'train' and 'val', corresponding to the tokenized training and validation data.
+    containing three keys: 'train', 'val', and 'test', corresponding to the tokenized training,
+    validation, and test data.
     """
     if args.dataset == "slimpajama":
         return get_slimpajama_data(args.datasets_dir)

@@ -92,12 +92,13 @@ def map_and_load_state_dict(model, state_dict):
 
 
 def eval_wa(
+    split,
     curr_iter,
     tokens,
     epoch,
     model,
     weight_averager,
-    val_reader,
+    reader,
     type_ctx,
     distributed_backend,
     cfg,
@@ -110,13 +111,13 @@ def eval_wa(
     if weight_averager.num_saved == 0:
         return
 
-    val_reader.set_step(0)
-    val_acc, val_loss = eval(
+    reader.set_step(0)
+    acc, loss = eval(
         weight_averager.get_latest_like(model).eval(),
-        val_reader,
+        reader,
         cfg.device,
         max_num_batches=(
-            val_reader.num_batches()
+            reader.num_batches()
             if curr_iter == cfg.iterations or full_eval
             else cfg.eval_batches
         ),
@@ -125,24 +126,24 @@ def eval_wa(
     )
 
     if curr_iter == cfg.iterations or full_eval:
-        logger.info("val wa (full) " + json.dumps({
+        logger.info(f"{split} wa (full) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/full/wa/loss": val_loss,
-            "val/full/wa/accuracy": val_acc,
+            f"{split}/full/wa/loss": loss,
+            f"{split}/full/wa/accuracy": acc,
         }))
     else:
-        logger.info("val wa (sampled) " + json.dumps({
+        logger.info(f"{split} wa (sampled) " + json.dumps({
             "iter": curr_iter,
             "tokens": tokens,
             "epoch": epoch,
-            "val/sampled/wa/loss": val_loss,
-            "val/sampled/wa/accuracy": val_acc,
+            f"{split}/sampled/wa/loss": loss,
+            f"{split}/sampled/wa/accuracy": acc,
         }))
 
     print(
         f">WA Eval: Iter={curr_iter} "
-        f"val_loss={val_loss:.3f} "
-        f"val_acc={val_acc:3f}"
+        f"{split}_loss={loss:.3f} "
+        f"{split}_acc={acc:3f}"
     )

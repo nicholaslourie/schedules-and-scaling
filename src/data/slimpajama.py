@@ -17,11 +17,11 @@ def get_slimpajama_data(datasets_dir, num_proc=40):
     if not os.path.exists(os.path.join(SPJ_DATA_PATH, "train.bin")):
         os.makedirs(SPJ_DATA_PATH, exist_ok=True)
         dataset = load_dataset("DKYoon/SlimPajama-6B")
-
-        split_dataset = dataset["train"].train_test_split(
-            test_size=0.0005, seed=2357, shuffle=True
-        )
-        split_dataset["val"] = split_dataset.pop("test")
+        dataset["val"] = dataset.pop("validation")
+        if set(dataset.keys()) != {"train", "val", "test"}:
+            raise RuntimeError(
+                "Found unexpected splits in SlimPajama-6B.",
+            )
 
         def process(example):
             ids = tknzr.encode_ordinary(
@@ -34,7 +34,7 @@ def get_slimpajama_data(datasets_dir, num_proc=40):
             return out
 
         # tokenize the dataset
-        tokenized = split_dataset.map(
+        tokenized = dataset.map(
             process,
             remove_columns=["text"],
             desc="tokenizing the splits",
@@ -64,4 +64,5 @@ def get_slimpajama_data(datasets_dir, num_proc=40):
     return {
         "train": os.path.join(SPJ_DATA_PATH, "train.bin"),
         "val": os.path.join(SPJ_DATA_PATH, "val.bin"),
+        "test": os.path.join(SPJ_DATA_PATH, "test.bin"),
     }

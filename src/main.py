@@ -275,14 +275,25 @@ def get_data_readers(args, verbose=True):
         auto_shard=False,  # NOTE Identical Per Rank
         keep_in_ram=args.data_in_ram,
     )
+    test_reader = DataReader(
+        data_src=data_srcs["test"],
+        batch_size=args.batch_size,
+        sequence_length=args.sequence_length,
+        seed=args.data_seed,
+        with_replacement=False,
+        auto_shard=False,  # NOTE Identical Per Rank
+        keep_in_ram=args.data_in_ram,
+    )
 
     if verbose:
         print(f"Num training tokens: {train_reader.num_tokens}")
         print(f"Num validation tokens: {val_reader.num_tokens}")
+        print(f"Num test tokens: {test_reader.num_tokens}")
 
     return {
         "train": train_reader,
         "val": val_reader,
+        "test": test_reader,
     }
 
 
