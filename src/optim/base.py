@@ -7,12 +7,9 @@ import yaml
 import torch
 import wandb
 
-from logger.logger import DynamicsLogger
 from optim.weight_averaging import (
     WeightAverager,
-    eval_ema,
     eval_wa,
-    ExponentialWeightAverager,
 )
 from .utils import (
     eval,
@@ -84,28 +81,6 @@ def train(
             count=curr_iter,
         )
 
-    if cfg.exponential_moving_average:
-        ema = ExponentialWeightAverager(
-            not_compiled_model,
-            interval=cfg.ema_interval,
-            decay=cfg.ema_decay,
-            warmup=cfg.warmup_steps if cfg.ema_after_warmup else 0,
-            dtype={
-                "float32": torch.float32,
-                "float64": torch.float64,
-            }[cfg.wa_dtype],
-        )
-
-    if distributed_backend.is_master_process() and cfg.log_dynamics:
-        with open(cfg.dynamics_logger_cfg, "r") as f:
-            dlcfg = yaml.safe_load(f)
-
-        # Hooks into optimizer
-        dlogger = DynamicsLogger(
-            model, opt, dlcfg, cfg.results_base_folder, wandb=cfg.wandb
-        )
-        dlogger.iteration = curr_iter
-
     substep = curr_iter * cfg.acc_steps
     train_reader, val_reader = datareaders["train"], datareaders["val"]
     train_reader.set_step(substep)
@@ -160,17 +135,6 @@ def train(
                     cfg,
                     full_eval=(curr_iter in cfg.full_eval_at),
                 )
-            if cfg.exponential_moving_average:
-                eval_ema(
-                    curr_iter,
-                    not_compiled_model,
-                    ema,
-                    val_reader,
-                    type_ctx,
-                    distributed_backend,
-                    cfg,
-                    full_eval=(curr_iter in cfg.full_eval_at),
-                )
 
         if curr_iter == cfg.iterations:
             # Save checkpoints and evaluate at final iteration, but no need to train further
@@ -201,8 +165,6 @@ def train(
         opt.zero_grad(set_to_none=True)
         if cfg.weight_average:
             weight_averager.step(not_compiled_model, distributed_backend.is_master_process())
-        if cfg.exponential_moving_average:
-            ema.step(not_compiled_model, distributed_backend.is_master_process())
         dt = (time.perf_counter_ns() - t_start) / 1e9
 
         curr_iter += 1

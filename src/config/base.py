@@ -25,7 +25,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument("--permanent-ckpt-interval", default=0, type=int)
     parser.add_argument("--latest-ckpt-interval", default=0, type=int)
     parser.add_argument("--resume-from", default=None, type=str)
-    parser.add_argument("--resume-from-swa", default=None, type=str)
 
     parser.add_argument("--auto-resume", default=True)
 
@@ -38,10 +37,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument(
         "--eval-seq-prefix", default="none", type=str
     )  # prefix used to generate sequences
-    parser.add_argument("--log-dynamics", action="store_true")
-    parser.add_argument(
-        "--dynamics-logger-cfg", default="./src/logger/rotational_logger.yaml", type=str
-    )
 
     # Schedule
     parser.add_argument(
@@ -98,27 +93,6 @@ def parse_args(base_parser, args, namespace):
     )
 
     parser.add_argument("--wa-use-temp-dir", action="store_true")
-    parser.add_argument("--wa-sweep-horizon", action="store_true")
-    parser.add_argument("--max-num-wa-sweeps", default=5, type=int)
-
-    parser.add_argument("--exponential-moving-average", action="store_true")
-    parser.add_argument(
-        "--ema-interval",
-        default=10,
-        type=int,
-        help="How often to take the EMA average (every k steps).",
-    )
-    parser.add_argument(
-        "--ema-decay",
-        default=0.95,
-        type=float,
-        help="EMA decay parameter (between 0.9 and 1).",
-    )
-    parser.add_argument(
-        "--ema-after-warmup",
-        action="store_true",
-        help="Start EMA after warmup steps.",
-    )
 
     # Dataset params
     parser.add_argument("--datasets-dir", type=str, default="./datasets/")
@@ -126,16 +100,7 @@ def parse_args(base_parser, args, namespace):
         "--dataset",
         default="slimpajama",
         choices=[
-            "wikitext",
-            "shakespeare-char",
-            "arxiv",
-            "arxiv2000",
-            "arxiv+wiki",
-            "openwebtext2",
-            "redpajama",
             "slimpajama",
-            "slimpajama_chunk1",
-            "redpajamav2",
         ],
     )
     parser.add_argument(
@@ -144,7 +109,7 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument("--vocab-size", default=50304, type=int)
     parser.add_argument(
         "--data-in-ram", action="store_true"
-    )  # force the data to RAM, mostly useless except for openwebtext2
+    )  # force the data to RAM, mostly useless
 
     # Model params
     parser.add_argument(
@@ -159,7 +124,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument(
         "--use-pretrained", default="none", type=str
     )  # 'none', 'gpt-2' or a path to the pretraind model
-    parser.add_argument("--from-dense", action="store_true")
     parser.add_argument("--init-std", default=0.02, type=float)
     parser.add_argument("--dropout", default=0.0, type=float)
     parser.add_argument("--n-head", default=12, type=int)
@@ -182,5 +146,5 @@ def parse_args(base_parser, args, namespace):
     )
     parser.add_argument("--bias", default=False, type=bool)
     parser.add_argument("--compile", action="store_true")
-    parser.add_argument("--mlp-dim-exp-factor", default=1.0, type=float)
+
     return parser.parse_args(args, namespace)
