@@ -1,9 +1,13 @@
+import logging
+
 from tqdm import tqdm
 import numpy as np
 import tiktoken
 from datasets import load_dataset
 import os
 
+
+logger = logging.getLogger(__name__)
 
 tknzr = tiktoken.get_encoding("gpt2")
 

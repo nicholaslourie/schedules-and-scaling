@@ -1,11 +1,15 @@
 from copy import deepcopy
+import json
+import logging
 from pathlib import Path
 import tempfile
 
 import torch
-import wandb
 
 from .utils import eval
+
+
+logger = logging.getLogger(__name__)
 
 
 class WeightAverager:
@@ -89,6 +93,8 @@ def map_and_load_state_dict(model, state_dict):
 
 def eval_wa(
     curr_iter,
+    tokens,
+    epoch,
     model,
     weight_averager,
     val_reader,
@@ -105,7 +111,7 @@ def eval_wa(
         return
 
     val_reader.set_step(0)
-    val_acc, val_loss, val_perplexity = eval(
+    val_acc, val_loss = eval(
         weight_averager.get_latest_like(model).eval(),
         val_reader,
         cfg.device,
@@ -118,25 +124,25 @@ def eval_wa(
         cfg=cfg,
     )
 
-    if cfg.wandb:
-        if curr_iter == cfg.iterations or full_eval:
-            logs = {
-                "iter": curr_iter,
-                "final-val/loss_wa": val_loss,
-                "final-val/perplexity_wa": val_perplexity,
-                "final-val/acc_wa": val_acc,
-            }
-        else:
-            logs = {
-                "iter": curr_iter,
-                "val/loss_wa": val_loss,
-                "val/perplexity_wa": val_perplexity,
-                "val/acc_wa": val_acc,
-            }
-        wandb.log(logs)
+    if curr_iter == cfg.iterations or full_eval:
+        logger.info("val wa (full) " + json.dumps({
+            "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
+            "val/full/wa/loss": val_loss,
+            "val/full/wa/accuracy": val_acc,
+        }))
+    else:
+        logger.info("val wa (sampled) " + json.dumps({
+            "iter": curr_iter,
+            "tokens": tokens,
+            "epoch": epoch,
+            "val/sampled/wa/loss": val_loss,
+            "val/sampled/wa/accuracy": val_acc,
+        }))
+
     print(
         f">WA Eval: Iter={curr_iter} "
         f"val_loss={val_loss:.3f} "
-        f"val_pp={val_perplexity:.3f} "
         f"val_acc={val_acc:3f}"
     )

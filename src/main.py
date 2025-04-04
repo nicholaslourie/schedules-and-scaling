@@ -1,13 +1,14 @@
 import argparse
 import json
+import logging
 from pathlib import Path
 import random
 import os
 import schedulefree
+import sys
 
 import numpy as np
 import torch
-import wandb
 
 import config
 from data.utils import DataReader, get_dataset
@@ -17,7 +18,22 @@ from optim.base import train
 from optim.utils import cos_inf_schedule, wsd_schedule
 
 
+logger = logging.getLogger(__name__)
+
+
 def main(args):
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter(
+        "%(asctime)s; %(levelname)s; %(name)s; %(message)s",
+    )
+
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setLevel(logging.WARNING)
+    stderr_handler.setFormatter(formatter)
+    root_logger.addHandler(stderr_handler)
+
     distributed_backend = distributed.make_backend_from_args(args)
     args = distributed_backend.get_adjusted_args_for_process(args)
     args.world_size = distributed_backend.get_world_size()
@@ -37,27 +53,39 @@ def main(args):
 
     exp_name = get_exp_name(args, distributed_backend)
     exp_dir = Path(args.results_base_folder) / exp_name
-    if distributed_backend.is_master_process() and args.wandb:
-        wandb.init(
-            project=args.wandb_project,
-            name=exp_name,
-            config=vars(args),
+
+    if distributed_backend.is_master_process():
+        exp_dir.mkdir(parents=True, exist_ok=True)
+
+        file_handler = logging.FileHandler(
+            filename=exp_dir / "log",
+            mode="a",
         )
-        wandb.define_metric("iter")
-        wandb.define_metric("train/*", step_metric="iter")
-        wandb.define_metric("val/*", step_metric="iter")
-        wandb.define_metric("lr", step_metric="iter")
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
 
     print(f"Starting Experiment: {exp_name}")
     print(f"Experiment Directory: {exp_dir}")
     print(f"Config:\n{vars(args)}\n")
+    if distributed_backend.is_master_process():
+        logger.info(f"Experiment: {exp_name}")
+        logger.info(f"Config: {json.dumps(vars(args))}")
 
     print(f"Loading dataset: '{args.dataset}'")
     datareaders = get_data_readers(args)
 
+    if distributed_backend.is_master_process():
+        logger.info("Num tokens: " + json.dumps({
+            split: reader.num_tokens
+            for split, reader in datareaders.items()
+        }))
+
     model = get_model(args).to(args.device)
     # TODO: take care of initializing the model if args.use_pretrained != 'none'
     print(f"\nModel:\n{model}")
+    if distributed_backend.is_master_process():
+        logger.info(f"Model:\n{model}")
 
     model = distributed_backend.transform_model(model)
     group_specs = distributed_backend.get_raw_model(model).get_parameter_group_specs()
@@ -75,10 +103,11 @@ def main(args):
     params_cnt = distributed_backend.get_raw_model(model).get_num_params()
     print("number of parameters: %.2fM" % (params_cnt / 1e6,))
     print("number of optimized parameters: %.2fM" % (optimized_params_cnt / 1e6,))
-    if args.wandb and distributed_backend.is_master_process():
-        wandb.log(
-            {"parameters": params_cnt, "optimized_parameters": optimized_params_cnt}
-        )
+    if distributed_backend.is_master_process():
+        logger.info("Num parameters: " + json.dumps({
+            "parameters": params_cnt,
+            "optimized_parameters": optimized_params_cnt,
+        }))
 
     if args.opt == "adamw":
         opt = torch.optim.AdamW(
@@ -101,6 +130,8 @@ def main(args):
             group_specs, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay
         )
     print(f"\nOptimizer:\n{opt}")
+    if distributed_backend.is_master_process():
+        logger.info(f"Optimizer:\n{opt}")
 
     if args.scheduler != "none":
         assert args.warmup_steps < args.iterations, "Warmup steps must be < iterations."
@@ -152,9 +183,6 @@ def main(args):
             # Auto resume overwrites resume_from
             args.resume_from = str(exp_dir / "ckpts" / "latest")
 
-    elif distributed_backend.is_master_process():
-        exp_dir.mkdir(parents=True, exist_ok=True)
-
     stats = train(
         model=model,
         opt=opt,
@@ -186,7 +214,7 @@ def get_args():
 
 
 def get_exp_name(args, distributed_backend):
-    """Returns the name of the experiment, used for saving models and wandb."""
+    """Returns the name of the experiment, used for saving models."""
     if args.experiment_name is not None:
         return args.experiment_name
 
@@ -216,8 +244,6 @@ def get_exp_name(args, distributed_backend):
             f"_scd{args.scale_depth}"
             # f"_bs{args.batch_size}x{args.acc_steps}_ws{args.world_size}"
         )
-    if args.wandb_run_prefix != "none":
-        exp_name = args.wandb_run_prefix + "_" + exp_name
     exp_name += f"_seed{args.seed - rank}"
     exp_name += f"_data_seed{args.data_seed}"
 

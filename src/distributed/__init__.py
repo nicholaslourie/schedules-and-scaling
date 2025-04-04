@@ -1,5 +1,10 @@
+import logging
+
 from . import ddp
 from . import single
+
+
+logger = logging.getLogger(__name__)
 
 BACKEND_TYPE_TO_MODULE_MAP = {
     "nccl": ddp.DataParallelDistributedBackend,

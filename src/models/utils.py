@@ -1,6 +1,11 @@
+import logging
+
 from .llama import Llama, RMSNorm
 from .base import GPTBase, LayerNorm
 import torch
+
+
+logger = logging.getLogger(__name__)
 
 BLACKLIST_WEIGHT_MODULES = (
     torch.nn.LayerNorm,

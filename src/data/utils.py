@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import numpy as np
 from typing import Dict
@@ -5,6 +6,9 @@ import torch
 import torch.distributed as dist
 
 from .slimpajama import get_slimpajama_data
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_dataset(args) -> Dict[str, np.ndarray]:

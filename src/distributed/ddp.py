@@ -1,3 +1,4 @@
+import logging
 import os
 import math
 from contextlib import contextmanager
@@ -6,6 +7,9 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group, get_world_size
 
 from .backend import DistributedBackend
+
+
+logger = logging.getLogger(__name__)
 
 
 class DataParallelDistributedBackend(DistributedBackend):
