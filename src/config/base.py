@@ -25,7 +25,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument("--permanent-ckpt-interval", default=0, type=int)
     parser.add_argument("--latest-ckpt-interval", default=0, type=int)
     parser.add_argument("--resume-from", default=None, type=str)
-    parser.add_argument("--resume-from-swa", default=None, type=str)
 
     parser.add_argument("--auto-resume", default=True)
 
@@ -125,7 +124,6 @@ def parse_args(base_parser, args, namespace):
     parser.add_argument(
         "--use-pretrained", default="none", type=str
     )  # 'none', 'gpt-2' or a path to the pretraind model
-    parser.add_argument("--from-dense", action="store_true")
     parser.add_argument("--init-std", default=0.02, type=float)
     parser.add_argument("--dropout", default=0.0, type=float)
     parser.add_argument("--n-head", default=12, type=int)
@@ -148,5 +146,5 @@ def parse_args(base_parser, args, namespace):
     )
     parser.add_argument("--bias", default=False, type=bool)
     parser.add_argument("--compile", action="store_true")
-    parser.add_argument("--mlp-dim-exp-factor", default=1.0, type=float)
+
     return parser.parse_args(args, namespace)
