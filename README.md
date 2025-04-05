@@ -7,7 +7,8 @@ was used to run additional experiments based on that paper.
 
 ## Quickstart
 
-Create a conda environment and install dependencies (we recommend Python 3.10):
+Create a conda environment and install dependencies (we recommend Python
+3.10):
 
 ```bash
 conda create -n env python=3.10
@@ -16,27 +17,42 @@ pip install -r requirements.txt
 ```
 
 Run a simple training on the SlimPajama 6B dataset:
+
 ```bash
 python ./src/main.py
 ```
 
-The above command trains a 213.34M parameters model with the Llama-style architecture. We recommend to use the `--compile` flag that speeds up training noticeably (up to 20% in our setup).
+The above command trains a 213.34M parameters model with the Llama-style
+architecture. We recommend to use the `--compile` flag that speeds up
+training noticeably (up to 20% in our setup).
 
 ## LR Schedules and Weight Averaging
+
 In order to use the cooldown schedule:
+
 ```bash
 python ./src/main.py --compile --scheduler wsd --wsd-fract-decay 0.2
 ```
-The argument `wsd-fract-decay` controls the fraction of the cooldown phase, and the functional form of the cooldown is handled with the argument `decay-type`.
+
+The argument `wsd-fract-decay` controls the fraction of the cooldown
+phase, and the functional form of the cooldown is handled with the
+argument `decay-type`.
 
 If you want to use stochastic weight averaging:
+
 ```bash
 python ./src/main.py --compile --scheduler wsd --wsd-fract-decay 0.2 --weight-average
 ```
-With this, the averaging is done automatically in slots of 500 steps; the model averages are all stored (beware of the disk space). The frequency is handled via the arguments `--wa-interval` (average every k steps) and `--wa-horizon` (the length of the horizon/window).
+
+With this, the averaging is done automatically in slots of 500 steps;
+the model averages are all stored (beware of the disk space). The
+frequency is handled via the arguments `--wa-interval` (average every k
+steps) and `--wa-horizon` (the length of the horizon/window).
 
 ## FLOPS helpers
-The [`flops.ipynb`](flops.ipynb) provides a few helpers and functionalities for FLOPS computations of transformer configurations.
+
+The [`flops.ipynb`](flops.ipynb) provides a few helpers and
+functionalities for FLOPS computations of transformer configurations.
 
 # Contact & Reference
 
